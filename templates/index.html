@@ -1,0 +1,702 @@
+
+<!DOCTYPE html>
+<html  style="height: 100%;">
+
+<head>
+	<!-- Mobile Specific Meta -->
+	<meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+	<!-- Favicon-->
+	<link rel="shortcut icon" href="../static/image/icon.png">
+	<!-- Author Meta -->
+	<meta name="author" content="codepixer">
+	<!-- Meta Description -->
+	<meta name="description" content="中文智能语音体验系统">
+	<!-- Meta Keyword -->
+	<meta name="keywords" content="语音识别、语音合成、声纹识别">
+	<!-- meta character set -->
+	<meta charset="UTF-8">
+	<!-- Site Title -->
+	<link href="../static/css/style.css" rel="stylesheet" type="text/css" media="all" />
+	<title>EchoNote</title>
+
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}">
+	<link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap/bootstrap.min.css') }}">
+	<link rel="stylesheet" href="../static/css/asrdemo.css">
+	<link rel="stylesheet" href="../static/css/bootstrap-slider.min.css">
+
+</head>
+
+<body style="height: 100%;">
+	<ul class="w3lsg-bubbles">
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+		<li></li>
+	</ul>
+	<div class="top"><p class="title">
+		<img class="icon_icon" src="/static/image/icon.png"></img>
+		<strong>艾音记</strong></p>
+		<!-- <p class="name" id="loction"></p> -->
+	    <button class="return" id="return" onclick="changepage(0)">
+			<img class="return_icon" src="/static/image/return.png"></img>
+			&nbsp;&nbsp;返回录音</button>
+	</div>
+	
+	<div class="left1">
+		<button class="add_memo" onclick="add_memo()">
+			<img class="add_icon" src="/static/image/add.png"></img>
+			&nbsp;&nbsp;添加新笔记
+		</button>
+	</div>
+	<div class="left2" id="memolist">
+	    <button class="memo_cat" id="memobut1" onclick="changepage(1)">会议笔记&nbsp;
+			<img class="add_icon" src="/static/image/book.png"></img>
+		</button>
+		<button class="memo_cat" id="memobut2" onclick="changepage(2)">工作笔记&nbsp;
+			<img class="add_icon" src="/static/image/book.png"></img>
+		</button>
+		<button class="memo_cat" id="memobut3" onclick="changepage(3)">心情笔记&nbsp;
+			<img class="add_icon" src="/static/image/book.png"></img>
+		</button>
+	</div>
+	<div class="main_page" id="memo0">
+		<div class="right1">
+			<div class="inputContent" id="inputContent0">
+				<!-- <div class="listen"></div> -->
+				<div class="inputText"  dir="ltr" tabindex="1" wrap="SOFT" name="i">请从这里开始你的第一份声音笔记吧！</div> 
+			</div>
+			<div class="add_box">
+				<button id="op1" class="add_to_memo" onclick="add_to_memo(1)">将这条录音添加进"会议笔记"
+					<img class="add_to_memo_icon" src="/static/image/right.png"></img>
+				</button>
+				<button id="op2" class="add_to_memo" onclick="add_to_memo(2)">将这条录音添加进"工作笔记"
+					<img class="add_to_memo_icon" src="/static/image/right.png"></img>
+				</button>
+				<button id="op3" class="add_to_memo" onclick="add_to_memo(3)">将这条录音添加进"心情笔记"
+					<img class="add_to_memo_icon" src="/static/image/right.png"></img>
+				</button>
+				<button id="op4" class="add_to_memo">将这条录音添加进"其他"
+					<img class="add_to_memo_icon" src="/static/image/down.png"></img>
+				</button>
+				
+			</div>
+		</div>
+		<div class="right2">
+			<div id="btn_buttom" >
+				<audio id="audioPlayer" class="asr_demo_audio" autoplay controls></audio>
+				<select id="asr_lang">
+					<option selected="selected" value="zh-CHS">中文</option>
+					<option value="en">英文</option>
+				</select>
+				&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;
+				<button id="record"><b id="record_status"></b></button>
+				<span id="time" style="width: 20px;display: inline-block"></span>
+			</div>
+		</div>
+	</div>
+
+	<div class="main_page" style="display: none;" id="memo1">
+		<div class="inputContent_memo" id="inputContent1"></div>
+	</div>
+	<div class="main_page" style="display: none;" id="memo2">
+		<div class="inputContent_memo" id="inputContent2"></div>
+	</div>
+	<div class="main_page" style="display: none;" id="memo3">
+		<div class="inputContent_memo" id="inputContent3"></div>
+	</div>
+	
+	<script src="../static/css/style.css"></script>
+	<script src="../static/js/vendor/jquery-2.2.4.min.js"></script>
+	<script src="{{ url_for('static', filename='js/vendor/bootstrap.min.js') }}"></script>
+	<script src="../static/js/bootstrap-slider.min.js"></script>
+	<script src="../static/js/HZRecorder.js"></script>
+
+
+
+	<!-- 为录音按钮绑定方法 -->
+	<script type="text/javascript">
+
+		// var slider_speed = new Slider("#ex1",{tooltip: 'always'});
+		// var slider_tone  = new Slider("#ex2",{tooltip: 'always'});
+		// var slider_voice = new Slider("#ex3",{tooltip: 'always'});
+	    var recorder;
+        var record_time=0;
+
+		var audio_array=[100];
+		var current_result="x";
+		
+	    function get(id) {
+	        return document.getElementById(id);
+	    }
+
+	    var elButton = get("record"),
+	            elTime = get("time");
+	        audio = document.querySelector('audio');
+
+        //var audio_array=[100];
+
+	    var isStart = true, time = 60, timer;
+
+
+		//倒计时
+		function updateTimer() {
+			$('#record').html(--time + "s");
+			if((time)==0){
+				elButton.click();
+			}
+		}
+		    //更新按钮
+		function updateButton() {
+			isStart = !isStart;
+			time
+	//        var val = isStart ? "开始录音" : "停止录音";
+			elTime.innerHTML = "";
+			if(isStart){
+				$('#record').css("background-image","url(../static/image/mic.png)");
+				$('#record').css("background-size","75%,75%");
+				$('#record').css("background-position","center");
+				$('#record').css("background-repeat","no-repeat");
+				$('#record').html("");
+			}else {
+				$('#record').css("background","rgba(93, 92, 222, 0.8)");
+				$('#record').html("60s");
+			}
+		}
+		elButton.onclick = function (){
+			if (isStart) {
+				cover_option();
+				time = 60;
+				//开始录音
+				updateButton();
+				timer = setInterval(updateTimer, 1000);
+				recorder.start();
+			} else {
+				//停止录音
+				recorder && recorder.stop();
+				if (timer) clearInterval(timer);
+				updateButton();
+				uploadAudio();
+				audio_array[record_time]=recorder.getBlob();
+				//audio_array[[record_time]]=audio;
+				//recorder.play(audio_array[0]);
+				//record.play(audio);
+				recorder && recorder.clear();
+				record_time++;
+			}
+		};
+
+		window.onload = function() {
+			check_memo_cat_length();
+			init();
+		};
+
+		function init() {
+			HZRecorder.get(function (rec) {
+				recorder = rec;    
+			});
+		}
+
+		function uploadAudio() {
+			var lang = $("#asr_lang option:selected").val();
+			recorder.upload(function (data) {
+				var fd = new FormData();
+				fd.append("audioData", data);
+				var url = "";
+				jQuery.ajax({
+					url : "https://aidemo.youdao.com/asr?lang="+lang,
+					type : 'POST',
+					async: false,
+					data : fd,
+					// 告诉jQuery不要去处理发送的数据
+					processData : false,
+					// 告诉jQuery不要去设置Content-Type请求头
+					contentType : false,
+					success : function(res) {
+						var result = eval("("+res+")");
+						if (result.errorCode == "0") {
+							var space="";
+							for(var i = 0; i < 60-time; i++){
+                                space += " &nbsp;" ;
+							}
+							var timestamp = '<div class="timestamp" "&nbsp;&nbsp;">' + new Date().toLocaleTimeString() + '</div>';
+					        document.getElementById("inputContent"+i).innerHTML+= timestamp;
+							var listening='<div class="listen" onclick="playlisten('+record_time+')">'+space+String(60-time)+'"&nbsp;&nbsp;<img class="img_speek" src="/static/image/speek.png"></img>&nbsp;&nbsp;</div>'
+							var recordcontent='<div class="inputText" dir="ltr" tabindex="1" wrap="SOFT" name="i">'+result.result+'</div>'
+                            document.getElementById("inputContent0").innerHTML+=listening;
+							document.getElementById("inputContent0").innerHTML+=recordcontent;
+							show_option();
+							current_result=result.result;
+						}else if(result.errorCode==411){
+							Toast.toast("您的访问过于频繁，请稍后访问");
+						}else if(result.errorCode==413){
+							Toast.toast("您今日的访问已达到上限");
+						}else if(result.errorCode==410){
+							Toast.toast("您的访问过于频繁，请稍后访问");
+						}else{
+							Toast.toast("语音识别失败")
+						}
+					},
+					error : function(error) {
+						Toast.toast("上传失败");
+					}
+				});
+			});
+		}
+
+		// function saveAudio(audioData, filename) {
+		// 	const blob = new Blob([audioData], { type: 'audio/wav' }); // 将音频数据转换为Blob对象
+		// 	const url = URL.createObjectURL(blob); // 创建Blob对象的URL
+		// 	const a = document.createElement('a');
+		// 	a.href = url;
+		// 	a.download = filename;
+		// 	a.click(); // 模拟用户点击下载链接
+		// 	URL.revokeObjectURL(url); // 释放URL对象的资源
+		// }
+
+		function playlisten(id){
+			console.log(id);
+			// recorder.start();
+			//console.log(audio_array[id]);
+			recorder.play(audio,audio_array[id]);
+           // recorder.play(audio);
+			// recorder && recorder.clear();
+		}
+
+		/*为“+号”绑定添加新memo*/
+		var MemoCount = 1;
+
+		function add_memo() {
+			var memoId = document.getElementsByClassName("memo_cat").length + 1;
+			//首先添加用于切换的page页面
+			var div = document.createElement("div");
+			div.id = "memo" + memoId;
+			div.classList.add("main_page");
+			div.style.display = "none";
+
+			//创建inputContent
+			var inputContent = document.createElement("div");
+			inputContent.id = "inputContent" + memoId;
+			inputContent.classList.add("inputContent_memo");
+
+			//将inputContent添加到page，page添加到body
+			div.appendChild(inputContent);
+			document.body.appendChild(div);
+
+  		    // 创建一个button元素
+			var button = document.createElement("button");
+		    button.classList.add("memo_cat");
+			button.innerHTML = `备忘录 ${MemoCount}  `;
+            // 为button元素添加data-target和id属性
+	    	button.dataset.target = "page_" + memoId;
+	    	button.id = "memobut" + memoId;
+			console.log(button.id);
+			// get(String(button.id)+':hover').style.background='#999999';
+
+			//添加双击修改功能
+			// 双击 button 元素时，将其设置为可编辑状态
+			button.addEventListener("dblclick", function() {
+				var oldValue = button.textContent;
+				button.contentEditable = true;
+				button.focus();
+
+ 			    // 当用户结束编辑时，将其设置为新值
+				button.addEventListener("blur", function() {
+					button.contentEditable = false;
+					var newValue = button.textContent;
+					if (newValue !== oldValue) {
+						button.textContent = newValue;
+					}
+					updateInputValue();
+				}, { once: true });
+			});
+
+            //添加book图片
+	    	var img = document.createElement("img");
+	    	img.src = "/static/image/book.png";
+	    	img.classList.add("add_icon");
+	    	button.appendChild(img);
+
+			// 为button添加onclick函数
+			button.onclick = function() {
+				changepage(memoId);
+			};
+
+            // 将button元素添加到页面中
+	    	var memo_cat = document.getElementById("memobut3");
+            memo_cat.parentNode.insertBefore(button, memo_cat.nextSibling);
+
+			// 提示用户操作成功
+			check_memo_cat_length();
+			alert(`备忘录${MemoCount++}新建成功！`);
+		}
+
+		function changepage(id){
+			for(var i=1;i< document.getElementsByClassName("memo_cat").length+1;i++){
+				get('memobut'+i).style.backgroundColor="rgba(255, 255, 255, 0)";
+			}
+			for (var i=0;i <= document.getElementsByClassName("memo_cat").length ;i++){
+				if(id==i){
+					get('memo'+i).style.display="block";
+					if(id!=0)
+					    get('memobut'+i).style.background="rgba(93, 92, 222, 0.2)";
+				}
+				else{
+					get('memo'+i).style.display="none";
+				}
+				if(id!=0){
+					get('return').style.display="block";
+				}
+				else{
+					get('return').style.display="none";
+				}
+			}
+		}
+
+		function add_to_memo(id){
+            for (var i=0;i<=document.getElementsByClassName("memo_cat").length ;i++){
+				if(id==i){
+					var space="";
+					for(var j = 0; j < 60-time; j++){
+                        space += " &nbsp;" ;
+					}
+					var listening='<div class="listen" onclick="playlisten('+String(record_time-1)+')">'+space+String(60-time)+'"&nbsp;&nbsp;<img class="img_speek" src="/static/image/speek.png"></img>&nbsp;&nbsp;</div>'
+					document.getElementById("inputContent"+i).innerHTML+=listening;
+					var recordcontent='<div class="inputText" dir="ltr" tabindex="1" wrap="SOFT" name="i">'+current_result+'</div>'
+					document.getElementById("inputContent"+i).innerHTML+=recordcontent;
+
+					var timestamp = '<div  "&nbsp;&nbsp;">' + new Date().toLocaleTimeString() + '</div>';
+					document.getElementById("inputContent"+i).innerHTML+= timestamp;
+
+					// 将滚动条自动滚动到新添加的内容处
+					document.getElementById("inputContent"+i).scrollTop = document.getElementById("inputContent"+i).scrollHeight;
+				}
+			}
+			// 提示用户操作成功
+			alert("语音添加成功");
+		}
+
+		// function show_option(){
+		// 	for(var i=1;i<5;i++){
+		// 		get('op'+i).style.display="block";
+		// 		setTimeout(1000);
+		// 	}
+		// }
+		var tmp=1;
+		var myVar;
+		function show_option1(){
+			get('op'+tmp).style.display="block";
+			tmp++;
+			if(tmp==document.getElementsByClassName("memo_cat").length + 2){
+				clearInterval(myVar);
+				tmp=1;
+			}
+		}
+		function show_option(){
+			myVar=setInterval(function(){ show_option1(tmp); }, 500);
+		}
+		function cover_option(){
+			for(var i=1;i < document.getElementsByClassName("memo_cat").length + 2 ; i++){
+				get('op'+i).style.display="none";
+			}
+		}
+
+		function check_memo_cat_length() {
+			var k = document.getElementsByClassName("memo_cat").length + 1;
+			if (k > 4) {
+			var memo = document.getElementById(`memobut${k-1}`);
+            // 创建一个新的button元素
+			var button = document.createElement("button");
+			button.id = "op" + k;
+			button.style.display = "none";
+			button.textContent = `将这条录音添加进"${memo.textContent}"`;
+			button.className = "add_to_memo";
+			button.onclick = function() {
+				add_to_memo(k-1);
+			};
+
+			// 创建一个新的 img 元素
+			var img = document.createElement("img");
+			img.src = "/static/image/right.png";
+			img.classList.add("add_to_memo_icon");
+
+            // 将 img 元素添加到 button 元素中
+			button.appendChild(img);
+
+            // 将button元素添加到页面中
+			var op_add = document.getElementById("op4");
+			op_add.parentNode.insertBefore(button, op4.nextSibling);
+			}
+		}
+
+		function updateInputValue() {
+  			// 获取 memo4 元素的 textContent 值
+			var k = document.getElementsByClassName("memo_cat").length;
+		    var memo = document.getElementById(`memobut${k}`);
+			var button = document.getElementById(`op${k + 1}`);
+			button.textContent = `将这条录音添加进"${memo.textContent}"`;
+		}
+
+	</script>
+	    
+
+
+</body>
+
+</html>
+
+<style scoped>
+	@font-face {
+		font-family: 'fz';
+		src: url("/static/fonts/FZYTK.TTF");
+	}
+	.top{
+		height:8%;
+		width:100%;
+		background-color: #F0F2F5;
+		color:rgba(93, 92, 222, 0.8);
+		/* padding:20px; */
+		/* font-family:'fz'; */
+		font-size:30px;
+		position:fixed;
+		top:0%;
+	}
+	.title{
+		font-family: 'fz';
+		margin-top: 10px;
+		text-shadow: #F0F2F5;
+		margin-left:80px;
+		width:200px;
+		display: inline-block;
+	}
+	.icon_icon{
+		max-width: 20%;
+		max-height: 20%;
+	}
+	.name{
+		font-family: 'fz';
+		margin-top: 18px;
+		text-shadow: #F0F2F5;
+		margin-left:450px;
+		width:400px;
+		height:40px;
+		position: fixed;
+		display: inline-block;
+		font-size:20px;
+	}
+	.left1 {
+        float: left;
+        width: 25%;
+		position:fixed;
+		top: 8%;
+		height:12%;
+		border-bottom: 1px solid #F7F8F8;
+    }
+	.left2 {
+        float: left;
+        width: 25%;
+		position:fixed;
+		top: 20%;
+		height:80%;
+		/* border-right: 1px solid #F7F8F8; */
+		overflow-y: scroll;
+    }
+	.left2::-webkit-scrollbar {
+            width: 4px;    
+            /*height: 4px;*/
+        }
+        .left2::-webkit-scrollbar-thumb {
+            border-radius: 10px;
+            -webkit-box-shadow: inset 0 0 5px rgba(93,92,222,0.5);
+            background: rgba(255,255,255,0);
+        }
+        .left2::-webkit-scrollbar-track {
+            -webkit-box-shadow: inset 0 0 5px rgba(255,255,255,0);
+            border-radius: 0;
+            background: rgba(255,255,255,0);
+
+        }
+
+	.right1{
+		float: right;
+		/* top: 8%; */
+		margin-left: 0%;
+		position:fixed;
+		width:100%;
+		height:70%;
+		overflow-y: scroll;
+	}
+	.right1::-webkit-scrollbar {
+            width: 4px;    
+            /*height: 4px;*/
+        }
+        .right1::-webkit-scrollbar-thumb {
+            border-radius: 10px;
+            -webkit-box-shadow: inset 0 0 5px rgba(93,92,222,0.5);
+            background: rgba(255,255,255,0);
+        }
+        .right1::-webkit-scrollbar-track {
+            -webkit-box-shadow: inset 0 0 5px rgba(255,255,255,0);
+            border-radius: 0;
+            background: rgba(255,255,255,0);
+
+        }
+
+	
+	.right2{
+		float: right;
+		width:100%;
+		height:22%;
+		position:fixed;
+		bottom:0%;
+		margin-left:0%;
+	}
+    .timestamp{
+		text-align: center;
+	}
+
+    .main_page{
+		/* float: right; */
+		top:8%;
+		width:75%;
+		height:92%;
+		position:fixed;
+		margin-left:25%;
+	}
+	.add_memo{
+		width:80%;
+		height:70%;
+		margin-left: 10%;
+		margin-top: 5%;
+		background-color: rgba(93, 92, 222, 0.8);
+		color:#ffffff;
+		border:none;
+		border-radius: 20px;
+	}
+
+	.add_memo:hover{
+		background-color: rgba(93, 92, 222, 0.7);
+	}
+
+	.add_memo:focus{
+	    outline:0;
+    }
+	/* #memobut1:hover{
+		background-color: rgba(93, 92, 222, 0.2);
+	}
+
+	#memobut2:hover{
+		background-color: rgba(93, 92, 222, 0.2);
+	}
+	#memobut3:hover{
+		background-color: rgba(93, 92, 222, 0.2);
+	} */
+
+	.add_icon{
+		max-width: 40%;
+		max-height: 40%;
+	}
+	.memo_cat{
+		margin-top:5px;
+		width:80%;
+		height:50px;
+		margin-left: 10%;
+		border:none;
+		border-radius: 20px;
+		border-bottom:1px,solid,#F0F2F5;
+		background:rgba(255,255,255,0);
+	}
+	.memo_cat:focus{
+		outline:0;
+	}
+	
+	.return_icon{
+		max-width: 50%;
+		max-height: 50%;
+	}
+	.return:hover{
+		background-color: rgba(93, 92, 222, 0.7);
+	}
+	.return:focus{
+	    outline:0;
+    }
+    .return{
+		float:right;
+		width:140px;
+		height:40px;
+		margin-top:15px;
+		margin-right:2%;
+		background:rgba(93, 92, 222, 0.8);
+		border:none;
+		font-size: 16px;
+		border-radius: 20px;
+		color:#ffffff;
+		display: none;
+	}
+	.add_to_memo{
+		width:60%;
+		margin-left: 7.5%;
+		height:40px;
+		border:none;
+		background-color: rgba(244,244,244,0.5);
+        border-radius: 20px;
+		margin-bottom:10px;
+		text-align: left;
+		font-size:15px;
+		padding-left:20px;
+	}
+
+	.add_to_memo:focus{
+	    outline:0;
+    }
+	.add_to_memo_icon{
+		max-width: 70%;
+		max-height: 70%;
+		float:right;
+		margin-right:10px;
+	}
+	.inputContent{
+		display:flex;
+		flex-direction: column;
+		width:60%;
+		margin-left:7.5%;
+		padding-top: 10px;
+	}
+	.inputContent_memo{
+		display:flex;
+		flex-direction: column;
+		width:80%;
+		margin-left:10%;
+		padding-top: 10px;
+	}
+	#op1{
+		display: none;
+	}
+	#op2{
+		display: none;
+	}
+	
+	#op3{
+		display: none;
+	}
+	#op4{
+		display: none;
+	}
+	#op1:hover{
+		background-color: rgba(222,222,222,0.5);
+	}
+	#op2:hover{
+		background-color: rgba(222,222,222,0.5);
+	}
+    #op3:hover{
+		background-color: rgba(222,222,222,0.5);
+	}
+	#op4:hover{
+		background-color: rgba(222,222,222,0.5);
+	}
+</style>
